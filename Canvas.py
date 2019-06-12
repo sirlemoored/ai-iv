@@ -3,8 +3,6 @@ import os
 
 class Canvas:
 
-    IMG_WIDTH = 640
-    IMG_HEIGHT = 480
 
     def __init__(self, width, height):
         self.root = tk.Tk()
@@ -18,6 +16,9 @@ class Canvas:
 
         self.imgs = []
 
+        self.IMG_WIDTH = 640
+        self.IMG_HEIGHT = 480
+
     def loadImages(self, img_list):
         for img in img_list:
             self.imgs.append(tk.PhotoImage(file=os.getcwd() + '\\img\\' + img))
@@ -27,8 +28,8 @@ class Canvas:
         self.canvas.create_image(self.getCenters()[1][0], self.getCenters()[1][1], image=self.imgs[1])
 
     def getCenters(self):
-        centerL = (Canvas.IMG_WIDTH / 2, Canvas.IMG_HEIGHT / 2)
-        centerR = (self.width - Canvas.IMG_WIDTH / 2, Canvas.IMG_HEIGHT / 2)
+        centerL = (self.IMG_WIDTH / 2, self.IMG_HEIGHT / 2)
+        centerR = (self.width - self.IMG_WIDTH / 2, self.IMG_HEIGHT / 2)
         return (centerL, centerR)
 
     def paintPoint(self, x, y, width, color):
@@ -44,7 +45,7 @@ class Canvas:
 
             x1 = coords1[indexLeft][0]
             y1 = coords1[indexLeft][1]
-            x2 = self.width - Canvas.IMG_WIDTH + coords2[indexRight][0]
+            x2 = self.width - self.IMG_WIDTH + coords2[indexRight][0]
             y2 = coords2[indexRight][1]
 
             if (linecolor is not None):

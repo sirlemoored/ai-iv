@@ -21,6 +21,8 @@ class ImagePair:
         self.props1 = None
         self.coords2 = None
         self.props2 = None
+        self.width = 0
+        self.height = 0
 
     def loadFiles(self):
         process = subprocess.Popen(
@@ -70,6 +72,11 @@ class ImagePair:
         matrix = pickle.load(open(self.img1[:-4] + self.img2[:-4] + '_distances', mode='rb'))
         return matrix
 
+    def loadSize(self):
+        im = Image.open(os.getcwd() + "\\img\\" + self.img1)
+        self.width = im.size[0]
+        self.height = im.size[1]
+
     def getPointingPairs(self, distanceMatrix):
         closestNeighborsA = np.argmin(distanceMatrix, axis=0)
         closestNeighborsB = np.argmin(distanceMatrix, axis=1)
@@ -88,11 +95,12 @@ if __name__ == '__main__':
 
     imgs = ImagePair("A.ppm", "C.ppm")
     #imgs.loadFiles()
+    imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
 
-    canvas = cv.Canvas(1300, 500)
+    canvas = cv.Canvas(2 * imgs.width + 10, imgs.height)
     canvas.loadImages([imgs.img1, imgs.img2])
     canvas.paintImages()
     canvas.paintPairs(pairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
