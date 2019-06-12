@@ -1,5 +1,5 @@
 __pycache__/
-.idea/
-*_distances
-img/
 extract_features/
+*_distances
+.idea/
+img/

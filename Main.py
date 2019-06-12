@@ -1,6 +1,7 @@
 import subprocess
 import os
 import time
+from PIL import Image
 import pickle
 import math
 import sys
@@ -69,38 +70,30 @@ class ImagePair:
         matrix = pickle.load(open(self.img1[:-4] + self.img2[:-4] + '_distances', mode='rb'))
         return matrix
 
+    def getPointingPairs(self, distanceMatrix):
+        closestNeighborsA = np.argmin(distanceMatrix, axis=0)
+        closestNeighborsB = np.argmin(distanceMatrix, axis=1)
+
+        pairs = []
+
+        for x in range(0, closestNeighborsA.shape[0]):
+            a = x
+            a_pointing_at = closestNeighborsA[a]
+            if (closestNeighborsB[a_pointing_at] == a):
+                pairs.append((a, a_pointing_at))
+
+        return pairs
+
 if __name__ == '__main__':
 
-    imgs = ImagePair("sky2.ppm", "sky1.ppm")
+    imgs = ImagePair("A.ppm", "C.ppm")
     #imgs.loadFiles()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
-    closestNeighborsA = np.argmin(distanceMatrix, axis=0)
-    closestNeighborsB = np.argmin(distanceMatrix, axis=1)
+    pairs = imgs.getPointingPairs(distanceMatrix)
 
-    pairs = []
-
-    for x in range (0, closestNeighborsA.shape[0]):
-        a = x
-        neighborA = closestNeighborsB[x]
-        if (closestNeighborsA[neighborA] == a):
-            pairs.append((x, closestNeighborsB[x]))
-
-    print(len(pairs))
     canvas = cv.Canvas(1300, 500)
     canvas.loadImages([imgs.img1, imgs.img2])
     canvas.paintImages()
-    for pair in pairs:
-
-        indexLeft = pair[0]
-        indexRight = pair[1]
-
-        x1 = imgs.coords1[indexLeft][0]
-        y1 = imgs.coords1[indexLeft][1]
-        x2 = canvas.width - cv.Canvas.IMG_WIDTH + imgs.coords2[indexRight][0]
-        y2 = imgs.coords2[indexRight][1]
-
-        canvas.paintPoint(x1, y1, 5, 'red')
-        canvas.paintPoint(x2, y2, 5, 'red')
-        canvas.paintLine(x1, y1, x2, y2, 1, 'white')
+    canvas.paintPairs(pairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
     canvas.loop()

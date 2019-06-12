@@ -37,6 +37,23 @@ class Canvas:
     def paintLine(self, x1, y1, x2, y2, width, color):
         self.canvas.create_line(x1, y1, x2, y2, fill=color, width=width)
 
+    def paintPairs(self, pairs, coords1, coords2, lcolor, rcolor, linecolor):
+        for pair in pairs:
+            indexLeft = pair[1]
+            indexRight = pair[0]
+
+            x1 = coords1[indexLeft][0]
+            y1 = coords1[indexLeft][1]
+            x2 = self.width - Canvas.IMG_WIDTH + coords2[indexRight][0]
+            y2 = coords2[indexRight][1]
+
+            if (linecolor is not None):
+                self.paintLine(x1, y1, x2, y2, 1, linecolor)
+            if (lcolor is not None):
+                self.paintPoint(x1, y1, 5, lcolor)
+            if (rcolor is not None):
+                self.paintPoint(x2, y2, 5, rcolor)
+
     def loop(self):
         self.canvas.mainloop()
 
