@@ -36,7 +36,7 @@ class Canvas:
         self.canvas.create_oval(x, y, x + width, y + width, fill=color, outline='')
 
     def paintLine(self, x1, y1, x2, y2, width, color):
-        self.canvas.create_line(x1, y1, x2, y2, fill=color, width=width)
+        self.canvas.create_line(x1, y1, x2, y2, fill=color, width=width, dash=(2,50))
 
     def paintPairs(self, pairs, coords1, coords2, lcolor, rcolor, linecolor):
         for pair in pairs:
@@ -51,9 +51,12 @@ class Canvas:
             if (linecolor is not None):
                 self.paintLine(x1, y1, x2, y2, 1, linecolor)
             if (lcolor is not None):
-                self.paintPoint(x1, y1, 5, lcolor)
+                self.paintPoint(x1, y1, 2, lcolor)
             if (rcolor is not None):
-                self.paintPoint(x2, y2, 5, rcolor)
+                self.paintPoint(x2, y2, 2, rcolor)
+
+    def paintIndexCoords(self, lpairs, rcoords, lcolor, rcolor, linecolor):
+        pass
 
     def loop(self):
         self.canvas.mainloop()
