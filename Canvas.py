@@ -4,7 +4,7 @@ import os
 class Canvas:
 
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, imgwidth, imgheight):
         self.root = tk.Tk()
         self.root.title('Sztuczna bezinteligencja')
 
@@ -16,8 +16,8 @@ class Canvas:
 
         self.imgs = []
 
-        self.IMG_WIDTH = 640
-        self.IMG_HEIGHT = 480
+        self.IMG_WIDTH = imgwidth
+        self.IMG_HEIGHT = imgheight
 
     def loadImages(self, img_list):
         for img in img_list:

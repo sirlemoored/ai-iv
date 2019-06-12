@@ -93,14 +93,14 @@ class ImagePair:
 
 if __name__ == '__main__':
 
-    imgs = ImagePair("A.ppm", "C.ppm")
+    imgs = ImagePair("A.ppm", "B.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
 
-    canvas = cv.Canvas(2 * imgs.width + 10, imgs.height)
+    canvas = cv.Canvas(2 * imgs.width + 10, imgs.height, imgs.width, imgs.height)
     canvas.loadImages([imgs.img1, imgs.img2])
     canvas.paintImages()
     canvas.paintPairs(pairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
