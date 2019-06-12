@@ -55,7 +55,7 @@ class Canvas:
             if (rcolor is not None):
                 self.paintPoint(x2, y2, 4, rcolor)
 
-    def paintPairsAff(self, tuple_pairs, lcolor, rcolor, linecolor):
+    def paintPairsAffPersp(self, tuple_pairs, lcolor, rcolor, linecolor):
         for pair in tuple_pairs:
             x1 = pair[0]
             y1 = pair[1] + (self.height - self.IMG_HEIGHT) / 2

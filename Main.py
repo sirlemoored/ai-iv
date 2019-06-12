@@ -110,7 +110,7 @@ class ImagePair:
         closest_points = sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[0]][0] -  self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2)[:n]
         return closest_points
 
-    def getPairsAffine(self, pairs, error_radius, loops, apply_heuristic):
+    def getPairsAffinic(self, pairs, error_radius, loops, apply_heuristic):
         best_err = math.inf
         best_A = None
         pairs_cpy = pairs.copy()
@@ -155,34 +155,97 @@ class ImagePair:
                     best_err = total_err
                     print(i, best_err)
             except:
-                pass
+                print(i)
         res = []
         for pair in pairs:
             xy1 = self.coords2[pair[0]]
             uv1 = self.coords1[pair[1]]
             new_uv = best_A @ np.array([[uv1[0]], [uv1[1]], [1]])
             err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
-            if (err < error_radius  ** 2):
+            if (err < error_radius):
+                res.append((uv1[0], uv1[1], new_uv[0][0], new_uv[1][0]))
+        return res
+
+    def getPairsPerspective(self, pairs, error_radius, loops, apply_heuristic):
+        best_err = math.inf
+        best_H = None
+        pairs_cpy = pairs.copy()
+        for i in range (0, loops):
+            try:
+                if (apply_heuristic == True):
+                    random_point = random.sample(pairs, 1)[0]
+                    random_points = self.findClosestPoints(random_point, pairs_cpy, 4)
+                else:
+                    random_points = random.sample(pairs, 4)
+                xy_s = [self.coords2[i[0]] for i in random_points]
+                uv_s = [self.coords1[i[1]] for i in random_points]
+
+                H = np.linalg.inv(np.array([
+                    np.concatenate((xy_s[0], [1, 0, 0, 0], [-uv_s[0][0] * xy_s[0][0], -uv_s[0][0] * xy_s[0][1]])),
+                    np.concatenate((xy_s[1], [1, 0, 0, 0], [-uv_s[1][0] * xy_s[1][0], -uv_s[1][0] * xy_s[1][1]])),
+                    np.concatenate((xy_s[2], [1, 0, 0, 0], [-uv_s[2][0] * xy_s[2][0], -uv_s[2][0] * xy_s[2][1]])),
+                    np.concatenate((xy_s[3], [1, 0, 0, 0], [-uv_s[3][0] * xy_s[3][0], -uv_s[3][0] * xy_s[3][1]])),
+                    np.concatenate(([0, 0, 0], xy_s[0], [1], [-uv_s[0][1] * xy_s[0][0], -uv_s[0][1] * xy_s[0][1]])),
+                    np.concatenate(([0, 0, 0], xy_s[1], [1], [-uv_s[1][1] * xy_s[1][0], -uv_s[1][1] * xy_s[1][1]])),
+                    np.concatenate(([0, 0, 0], xy_s[2], [1], [-uv_s[2][1] * xy_s[2][0], -uv_s[2][1] * xy_s[2][1]])),
+                    np.concatenate(([0, 0, 0], xy_s[3], [1], [-uv_s[3][1] * xy_s[3][0], -uv_s[3][1] * xy_s[3][1]]))
+                ])) @ np.array([
+                    [uv_s[0][0]],
+                    [uv_s[1][0]],
+                    [uv_s[2][0]],
+                    [uv_s[3][0]],
+                    [uv_s[0][1]],
+                    [uv_s[1][1]],
+                    [uv_s[2][1]],
+                    [uv_s[3][1]]
+                ])
+
+                H = np.concatenate((np.squeeze(H), [1]))
+
+                H = np.linalg.inv(H.reshape((3,3)))
+
+                total_err = 0
+
+                for pair in pairs:
+                    uv1 = self.coords2[pair[0]]
+                    xy1 = self.coords1[pair[1]]
+
+                    new_uv = H @ np.array([[xy1[0]], [xy1[1]], [1]])
+                    err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
+                    total_err += err
+
+                if (total_err < best_err):
+                    best_H = H
+                    best_err = total_err
+            except:
+                print(i)
+        res = []
+        for pair in pairs:
+            xy1 = self.coords2[pair[0]]
+            uv1 = self.coords1[pair[1]]
+            new_uv = best_H @ np.array([[uv1[0]], [uv1[1]], [1]])
+            err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
+            if (err < error_radius):
                 res.append((uv1[0], uv1[1], new_uv[0][0], new_uv[1][0]))
         return res
 
 
-
 if __name__ == '__main__':
 
-    imgs = ImagePair("p1.ppm", "p2.ppm")
+    imgs = ImagePair("sky1.ppm", "sky2.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
-    newPairsAff = imgs.getPairsAffine(pairs, error_radius=20, loops=500, apply_heuristic=True)
-    newPairs = imgs.getPairsCohesive(pairs, percent_of_total=0.1, percent_correct=0.9)
+    newPairs = imgs.getPairsAffinic(pairs, error_radius=10000, loops=1000, apply_heuristic=False)
+    #newPairs = imgs.getPairsCohesive(pairs, percent_of_total=0.2, percent_correct=0.9)
+    #newPairsPersp = imgs.getPairsPerspective(pairs, error_radius=10, loops=500, apply_heuristic=True)
 
     canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
     canvas.loadImages((imgs.img1, imgs.img2))
     canvas.paintImages()
     #canvas.paintPairs(newPairs, imgs.coords1, imgs.coords2, 'red', 'red', 'lime')
-    canvas.paintPairsAff(newPairsAff, 'green', 'green', 'blue')
+    canvas.paintPairsAffPersp(newPairs, 'green', 'green', 'blue')
 
     canvas.loop()
