@@ -65,11 +65,11 @@ class ImagePair:
 
     def computeDistanceMatrix(self):
         matrix = dist.cdist(self.props1, self.props2, 'minkowski', p=1)
-        pickle.dump(matrix, open(self.img1[:-4] + self.img2[:-4] + '_distances', mode='wb'))
+        pickle.dump(matrix, open("dist/" + self.img1[:-4] + self.img2[:-4] + '_distances', mode='wb'))
         return matrix
 
     def loadDistanceMatrix(self):
-        matrix = pickle.load(open(self.img1[:-4] + self.img2[:-4] + '_distances', mode='rb'))
+        matrix = pickle.load(open("dist/" + self.img1[:-4] + self.img2[:-4] + '_distances', mode='rb'))
         return matrix
 
     def loadSize(self):
@@ -91,7 +91,7 @@ class ImagePair:
 
         return pairs
 
-    def getPairsWithNeighbors(self, pairs, distance_matrix, percent_of_total, percent_correct):
+    def getPairsWithNeighbors(self, pairs, percent_of_total, percent_correct):
         if (percent_of_total < 0 or percent_of_total > 1 or percent_correct < 0 or percent_correct > 1):
             return None
 
@@ -112,13 +112,13 @@ class ImagePair:
 
 if __name__ == '__main__':
 
-    imgs = ImagePair("4h.ppm", "4h1.ppm")
-    #imgs.loadFiles()
+    imgs = ImagePair("sky1.ppm", "sky2.ppm")
+    imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
-    newPairs = imgs.getPairsWithNeighbors(pairs, distanceMatrix, percent_of_total=0.05, percent_correct=0.9)
+    newPairs = imgs.getPairsWithNeighbors(pairs, percent_of_total=0.01, percent_correct=0.9)
 
     canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
     canvas.loadImages((imgs.img1, imgs.img2))
