@@ -110,14 +110,17 @@ class ImagePair:
         closest_points = sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[0]][0] -  self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2)[:n]
         return closest_points
 
-    def getPairsAffine(self, pairs, error_threshold):
+    def getPairsAffine(self, pairs, error_radius, loops, apply_heuristic):
         best_err = math.inf
         best_A = None
         pairs_cpy = pairs.copy()
-        for i in range (0, 1000):
+        for i in range (0, loops):
             try:
-                random_point = random.sample(pairs, 1)[0]
-                random_points = self.findClosestPoints(random_point, pairs_cpy, 3)
+                if (apply_heuristic == True):
+                    random_point = random.sample(pairs, 1)[0]
+                    random_points = self.findClosestPoints(random_point, pairs_cpy, 3)
+                else:
+                    random_points = random.sample(pairs, 3)
                 xy_s = [self.coords2[i[0]] for i in random_points]
                 uv_s = [self.coords1[i[1]] for i in random_points]
                 A = np.linalg.inv(np.array([
@@ -159,27 +162,27 @@ class ImagePair:
             uv1 = self.coords1[pair[1]]
             new_uv = best_A @ np.array([[uv1[0]], [uv1[1]], [1]])
             err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
-            if (err < 50):
-                res.append((new_uv[0][0], new_uv[1][0]))
+            if (err < error_radius  ** 2):
+                res.append((uv1[0], uv1[1], new_uv[0][0], new_uv[1][0]))
         return res
 
 
 
 if __name__ == '__main__':
 
-    imgs = ImagePair("4h.ppm", "4hr.ppm")
+    imgs = ImagePair("p1.ppm", "p2.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
-    newPairsAff = imgs.getPairsAffine(pairs, 10)
-    newPairs = imgs.getPairsCohesive(pairs, percent_of_total=0.1, percent_correct=0.3)
+    newPairsAff = imgs.getPairsAffine(pairs, error_radius=20, loops=500, apply_heuristic=True)
+    newPairs = imgs.getPairsCohesive(pairs, percent_of_total=0.1, percent_correct=0.9)
 
     canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
     canvas.loadImages((imgs.img1, imgs.img2))
     canvas.paintImages()
-    canvas.paintPairs(newPairs, imgs.coords1, imgs.coords2, 'red', 'red', 'lime')
-    for coord in newPairsAff:
-        canvas.paintPoint(canvas.width / 2 + coord[0], coord[1] + (canvas.height - canvas.IMG_HEIGHT) / 2, 5, 'blue')
+    #canvas.paintPairs(newPairs, imgs.coords1, imgs.coords2, 'red', 'red', 'lime')
+    canvas.paintPairsAff(newPairsAff, 'green', 'green', 'blue')
+
     canvas.loop()

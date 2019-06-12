@@ -51,12 +51,24 @@ class Canvas:
             if (linecolor is not None):
                 self.paintLine(x1, y1, x2, y2, 1, linecolor)
             if (lcolor is not None):
-                self.paintPoint(x1, y1, 2, lcolor)
+                self.paintPoint(x1, y1, 4, lcolor)
             if (rcolor is not None):
-                self.paintPoint(x2, y2, 2, rcolor)
+                self.paintPoint(x2, y2, 4, rcolor)
 
-    def paintIndexCoords(self, lpairs, rcoords, lcolor, rcolor, linecolor):
-        pass
+    def paintPairsAff(self, tuple_pairs, lcolor, rcolor, linecolor):
+        for pair in tuple_pairs:
+            x1 = pair[0]
+            y1 = pair[1] + (self.height - self.IMG_HEIGHT) / 2
+            x2 = self.width - self.width / 2 + pair[2]
+            y2 = pair[3] + (self.height - self.IMG_HEIGHT) / 2
+
+            if (linecolor is not None):
+                self.paintLine(x1, y1, x2, y2, 1, linecolor)
+            if (lcolor is not None):
+                self.paintPoint(x1, y1, 4, lcolor)
+            if (rcolor is not None):
+                self.paintPoint(x2, y2, 4, rcolor)
+
 
     def loop(self):
         self.canvas.mainloop()
