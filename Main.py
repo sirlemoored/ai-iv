@@ -91,17 +91,34 @@ class ImagePair:
 
         return pairs
 
+    def getPairsWithNeighbors(self, pairs, percent_of_total, percent_correct):
+        if (percent_of_total < 0 or percent_of_total > 1 or percent_correct < 0 or percent_correct > 1):
+            return None
+
+        num_closest = int(len(pairs) * percent_of_total)
+        num_correct = int(num_closest * percent_correct)
+        pairs_cpy = pairs.copy()
+
+        for pair in pairs:
+            closest_points_a = [i[0] for i in sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[0]][0] - self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2)  [:num_closest]]
+            closest_points_b = [i[1] for i in sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[1]][0] - self.coords2[p[1]][0]) ** 2 + (self.coords2[pair[1]][1] - self.coords2[p[1]][1]) ** 2)  [:num_closest]]
+            #print(pair, '--->', closest_points_a,'--->',closest_points_b)
+
+
+
+
 if __name__ == '__main__':
 
-    imgs = ImagePair("A.ppm", "B.ppm")
+    imgs = ImagePair("sky1.ppm", "sky2.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
+    imgs.getPairsWithNeighbors(pairs, 0.01, 1)
 
-    canvas = cv.Canvas(2 * imgs.width + 10, imgs.height, imgs.width, imgs.height)
-    canvas.loadImages([imgs.img1, imgs.img2])
+    canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
+    canvas.loadImages((imgs.img1, imgs.img2))
     canvas.paintImages()
     canvas.paintPairs(pairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
     canvas.loop()

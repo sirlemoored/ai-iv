@@ -28,8 +28,8 @@ class Canvas:
         self.canvas.create_image(self.getCenters()[1][0], self.getCenters()[1][1], image=self.imgs[1])
 
     def getCenters(self):
-        centerL = (self.IMG_WIDTH / 2, self.IMG_HEIGHT / 2)
-        centerR = (self.width - self.IMG_WIDTH / 2, self.IMG_HEIGHT / 2)
+        centerL = (self.width / 4, self.height / 2)
+        centerR = (self.width * 3 / 4, self.height / 2)
         return (centerL, centerR)
 
     def paintPoint(self, x, y, width, color):
