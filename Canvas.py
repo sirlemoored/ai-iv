@@ -44,9 +44,9 @@ class Canvas:
             indexRight = pair[0]
 
             x1 = coords1[indexLeft][0]
-            y1 = coords1[indexLeft][1]
-            x2 = self.width - self.IMG_WIDTH + coords2[indexRight][0]
-            y2 = coords2[indexRight][1]
+            y1 = coords1[indexLeft][1] + (self.height - self.IMG_HEIGHT) / 2
+            x2 = self.width - self.width / 2 + coords2[indexRight][0]
+            y2 = coords2[indexRight][1] + (self.height - self.IMG_HEIGHT) / 2
 
             if (linecolor is not None):
                 self.paintLine(x1, y1, x2, y2, 1, linecolor)

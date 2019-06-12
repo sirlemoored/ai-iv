@@ -91,7 +91,7 @@ class ImagePair:
 
         return pairs
 
-    def getPairsWithNeighbors(self, pairs, percent_of_total, percent_correct):
+    def getPairsWithNeighbors(self, pairs, distance_matrix, percent_of_total, percent_correct):
         if (percent_of_total < 0 or percent_of_total > 1 or percent_correct < 0 or percent_correct > 1):
             return None
 
@@ -99,26 +99,29 @@ class ImagePair:
         num_correct = int(num_closest * percent_correct)
         pairs_cpy = pairs.copy()
 
+        res_pairs = []
+
         for pair in pairs:
             closest_points_a = [i[0] for i in sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[0]][0] - self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2)  [:num_closest]]
-            closest_points_b = [i[1] for i in sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[1]][0] - self.coords2[p[1]][0]) ** 2 + (self.coords2[pair[1]][1] - self.coords2[p[1]][1]) ** 2)  [:num_closest]]
-            #print(pair, '--->', closest_points_a,'--->',closest_points_b)
-
+            closest_points_b = [i[0] for i in sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords1[pair[1]][0] - self.coords1[p[1]][0]) ** 2 + (self.coords1[pair[1]][1] - self.coords1[p[1]][1]) ** 2)  [:num_closest]]
+            if(len(np.intersect1d(closest_points_a, closest_points_b)) >= num_correct):
+                res_pairs.append(pair)
+        return res_pairs
 
 
 
 if __name__ == '__main__':
 
-    imgs = ImagePair("sky1.ppm", "sky2.ppm")
+    imgs = ImagePair("4h.ppm", "4h1.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
-    imgs.getPairsWithNeighbors(pairs, 0.01, 1)
+    newPairs = imgs.getPairsWithNeighbors(pairs, distanceMatrix, percent_of_total=0.05, percent_correct=0.9)
 
     canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
     canvas.loadImages((imgs.img1, imgs.img2))
     canvas.paintImages()
-    canvas.paintPairs(pairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
+    canvas.paintPairs(newPairs, imgs.coords1, imgs.coords2, 'green', 'blue', 'red')
     canvas.loop()
