@@ -6,7 +6,7 @@ class Canvas:
 
     def __init__(self, width, height, imgwidth, imgheight):
         self.root = tk.Tk()
-        self.root.title('Sztuczna bezinteligencja')
+        self.root.title('Miłe obraski')
 
         self.width = width
         self.height = height
@@ -33,10 +33,10 @@ class Canvas:
         return (centerL, centerR)
 
     def paintPoint(self, x, y, width, color):
-        self.canvas.create_oval(x, y, x + width, y + width, fill=color, outline='')
+        self.canvas.create_oval(x - width/2, y - width/2, x + width *  0.5, y + width * 0.5, fill=color, outline='')
 
     def paintLine(self, x1, y1, x2, y2, width, color):
-        self.canvas.create_line(x1, y1, x2, y2, fill=color, width=width, dash=(2,50))
+        self.canvas.create_line(x1, y1, x2, y2, fill=color, width=width, dash=(1,50))
 
     def paintPairs(self, pairs, coords1, coords2, lcolor, rcolor, linecolor):
         for pair in pairs:
@@ -49,11 +49,11 @@ class Canvas:
             y2 = coords2[indexRight][1] + (self.height - self.IMG_HEIGHT) / 2
 
             if (linecolor is not None):
-                self.paintLine(x1, y1, x2, y2, 1, linecolor)
+                self.paintLine(x1, y1, x2, y2, 2, linecolor)
             if (lcolor is not None):
-                self.paintPoint(x1, y1, 4, lcolor)
+                self.paintPoint(x1, y1, 5, lcolor)
             if (rcolor is not None):
-                self.paintPoint(x2, y2, 4, rcolor)
+                self.paintPoint(x2, y2, 5, rcolor)
 
     def paintPairsAffPersp(self, tuple_pairs, lcolor, rcolor, linecolor):
         for pair in tuple_pairs:
@@ -63,11 +63,11 @@ class Canvas:
             y2 = pair[3] + (self.height - self.IMG_HEIGHT) / 2
 
             if (linecolor is not None):
-                self.paintLine(x1, y1, x2, y2, 1, linecolor)
+                self.paintLine(x1, y1, x2, y2, 2, linecolor)
             if (lcolor is not None):
-                self.paintPoint(x1, y1, 4, lcolor)
+                self.paintPoint(x1, y1, 5, lcolor)
             if (rcolor is not None):
-                self.paintPoint(x2, y2, 4, rcolor)
+                self.paintPoint(x2, y2, 5, rcolor)
 
 
     def loop(self):

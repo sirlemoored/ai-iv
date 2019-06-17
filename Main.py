@@ -106,9 +106,18 @@ class ImagePair:
                 res_pairs.append(pair)
         return res_pairs
 
-    def findClosestPoints(self, pair, pairs_cpy, n):
-        closest_points = sorted(pairs_cpy, reverse=False, key=lambda p: (self.coords2[pair[0]][0] -  self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2)[:n]
-        return closest_points
+    def findClosestNonOverlappingPoint(self, pair, pairs_cpy, collection):
+        bestDist = math.inf
+        bestPair = None
+        for p in pairs_cpy:
+            if ((self.coords2[p[0]][0], self.coords2[p[0]][1]) in collection[:]):
+                continue
+            dist = (self.coords2[pair[0]][0] - self.coords2[p[0]][0]) ** 2 + (self.coords2[pair[0]][1] - self.coords2[p[0]][1]) ** 2
+            if (dist < bestDist and dist > 0):
+                bestPair = p
+                bestDist = dist
+
+        return bestPair
 
     def getPairsAffinic(self, pairs, error_radius, loops, apply_heuristic):
         best_err = math.inf
@@ -117,20 +126,24 @@ class ImagePair:
         for i in range (0, loops):
             try:
                 if (apply_heuristic == True):
-                    random_point = random.sample(pairs, 1)[0]
-                    random_points = self.findClosestPoints(random_point, pairs_cpy, 3)
+                    random_point_a = random.sample(pairs, 1)[0]
+                    random_point_b = self.findClosestNonOverlappingPoint(random_point_a, pairs_cpy, [])
+                    visited = [(self.coords2[random_point_a[0]][0], self.coords2[random_point_a[0]][1]), (self.coords2[random_point_b[0]][0], self.coords2[random_point_b[0]][1])]
+                    random_point_c = self.findClosestNonOverlappingPoint(random_point_b, pairs_cpy, visited)
+                    random_points = [random_point_a, random_point_b, random_point_c]
                 else:
                     random_points = random.sample(pairs, 3)
                 xy_s = [self.coords2[i[0]] for i in random_points]
                 uv_s = [self.coords1[i[1]] for i in random_points]
-                A = np.linalg.inv(np.array([
+                A = np.array([
                     np.concatenate((xy_s[0], [1, 0, 0, 0])),
                     np.concatenate((xy_s[1], [1, 0, 0, 0])),
                     np.concatenate((xy_s[2], [1, 0, 0, 0])),
                     np.concatenate(([0, 0, 0], xy_s[0], [1])),
                     np.concatenate(([0, 0, 0], xy_s[1], [1])),
                     np.concatenate(([0, 0, 0], xy_s[2], [1]))
-                ])) @ np.array([
+                ])
+                A = np.linalg.inv(A) @ np.array([
                     [uv_s[0][0]],
                     [uv_s[1][0]],
                     [uv_s[2][0]],
@@ -150,21 +163,22 @@ class ImagePair:
                     err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
                     total_err += err
 
+
                 if (total_err < best_err):
                     best_A = A
                     best_err = total_err
                     print(i, best_err)
-            except:
-                print(i)
+            except Exception as e:
+                pass
         res = []
         for pair in pairs:
-            xy1 = self.coords2[pair[0]]
-            uv1 = self.coords1[pair[1]]
-            new_uv = best_A @ np.array([[uv1[0]], [uv1[1]], [1]])
+            uv1 = self.coords2[pair[0]]
+            xy1 = self.coords1[pair[1]]
+            new_uv = best_A @ np.array([[xy1[0]], [xy1[1]], [1]])
             err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
             if (err < error_radius):
-                res.append((uv1[0], uv1[1], new_uv[0][0], new_uv[1][0]))
-        return res
+                res.append((xy1[0], xy1[1], new_uv[0][0], new_uv[1][0]))
+        return res, best_A
 
     def getPairsPerspective(self, pairs, error_radius, loops, apply_heuristic):
         best_err = math.inf
@@ -173,8 +187,14 @@ class ImagePair:
         for i in range (0, loops):
             try:
                 if (apply_heuristic == True):
-                    random_point = random.sample(pairs, 1)[0]
-                    random_points = self.findClosestPoints(random_point, pairs_cpy, 4)
+                    random_point_a = random.sample(pairs, 1)[0]
+                    random_point_b = self.findClosestNonOverlappingPoint(random_point_a, pairs_cpy, [])
+                    visited = [(self.coords2[random_point_a[0]][0], self.coords2[random_point_a[0]][1]),
+                               (self.coords2[random_point_b[0]][0], self.coords2[random_point_b[0]][1])]
+                    random_point_c = self.findClosestNonOverlappingPoint(random_point_b, pairs_cpy, visited)
+                    visited.append((self.coords2[random_point_c[0]][0], self.coords2[random_point_c[0]][1]))
+                    random_point_d = self.findClosestNonOverlappingPoint(random_point_c, pairs_cpy, visited)
+                    random_points = [random_point_a, random_point_b, random_point_c, random_point_d]
                 else:
                     random_points = random.sample(pairs, 4)
                 xy_s = [self.coords2[i[0]] for i in random_points]
@@ -215,37 +235,45 @@ class ImagePair:
                     total_err += err
 
                 if (total_err < best_err):
-                    best_H = H
+                    best_H = np.linalg.inv(H)
                     best_err = total_err
+                    print(i, best_err)
+
             except:
-                print(i)
+                pass
         res = []
         for pair in pairs:
-            xy1 = self.coords2[pair[0]]
-            uv1 = self.coords1[pair[1]]
-            new_uv = best_H @ np.array([[uv1[0]], [uv1[1]], [1]])
+            uv1 = self.coords2[pair[0]]
+            xy1 = self.coords1[pair[1]]
+            new_uv = best_H @ np.array([[xy1[0]], [xy1[1]], [1]])
             err = np.sqrt((uv1[0] - new_uv[0][0]) ** 2 + (uv1[1] - new_uv[1][0]) ** 2)
             if (err < error_radius):
-                res.append((uv1[0], uv1[1], new_uv[0][0], new_uv[1][0]))
-        return res
+                res.append((xy1[0], xy1[1], new_uv[0][0], new_uv[1][0]))
+        return res, best_H
 
 
 if __name__ == '__main__':
 
-    imgs = ImagePair("sky1.ppm", "sky2.ppm")
+    imgs = ImagePair("4hr.ppm", "4hpersp.ppm")
     #imgs.loadFiles()
     imgs.loadSize()
     imgs.loadMatrices()
     distanceMatrix = imgs.loadDistanceMatrix()
     pairs = imgs.getPointingPairs(distanceMatrix)
-    newPairs = imgs.getPairsAffinic(pairs, error_radius=10000, loops=1000, apply_heuristic=False)
-    #newPairs = imgs.getPairsCohesive(pairs, percent_of_total=0.2, percent_correct=0.9)
-    #newPairsPersp = imgs.getPairsPerspective(pairs, error_radius=10, loops=500, apply_heuristic=True)
+    print(len(pairs))
+    #newPairsC = imgs.getPairsCohesive(pairs, percent_of_total=0.5, percent_correct=0.5)
+    #newPairsA, best_A = imgs.getPairsAffinic(pairs, error_radius=5, loops=1000, apply_heuristic=False)
+    newPairsP, best_H = imgs.getPairsAffinic(pairs, error_radius=50, loops=1000, apply_heuristic=False)
+    #print(len(newPairsP))
+    #print(best_H)
+    #print(len(newPairsC), len(newPairsA), len(newPairsP))
 
     canvas = cv.Canvas(2 * imgs.width + 20, 1.1 * imgs.height, imgs.width, imgs.height)
     canvas.loadImages((imgs.img1, imgs.img2))
     canvas.paintImages()
-    #canvas.paintPairs(newPairs, imgs.coords1, imgs.coords2, 'red', 'red', 'lime')
-    canvas.paintPairsAffPersp(newPairs, 'green', 'green', 'blue')
+    #canvas.paintPairs(newPairsC, imgs.coords1, imgs.coords2, 'cyan', 'cyan', 'cyan')
+    #canvas.paintPairs(newPairsC, imgs.coords1, imgs.coords2, '#cdcecc', '#cdcecc', '#cdcecc')
+    #canvas.paintPairsAffPersp(newPairsA, '#80f442', '#80f442', '#80f442')
+    canvas.paintPairsAffPersp(newPairsP, 'magenta', 'magenta', 'magenta')
 
     canvas.loop()
